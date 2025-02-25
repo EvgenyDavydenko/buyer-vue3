@@ -5,12 +5,11 @@ import Pusher from "pusher-js";
 let echo = null;
 
 export function initWebSocket(token) {
+  if (echo) return;
+
   window.Pusher = Pusher;
   window.Pusher.logToConsole = true;
-
-  console.log("WebSocket initializing...");
-
-  // Подключение Laravel Echo
+  
   echo = new Echo({
     broadcaster: "reverb",
     key: "d6afo3fjzrmflyhq6mrg",
@@ -34,15 +33,21 @@ export function initWebSocket(token) {
 }
 
 export function subscribeToUserSendPong(userId) {
-  if (!echo) {
-    console.error("WebSocket is not initialized. Call initWebSocket first.");
-    return;
-  }
+  if (!echo) return;
+  console.log("subscribeToUserSendPong");
+  echo.private(`user.${userId}`).listen(".sendPong", (event) => {
+    console.log("User:", event);
+  });
+}
 
-  // Подписываемся на приватный канал
-  console.log("Subscribing to channel...");
-  echo.private("user." + userId).listen(".sendPong", (event) => {
-    console.log("Message received:", event);
+export function subscribeToUserDialogCreated(userId, callback) {
+  if (!echo) return;
+  console.log("subscribeToUserDialogCreated");
+  echo.private(`user.${userId}`).listen(".dialogCreated", (event) => {
+    console.log("New dialog received:", event);
+    if (callback) {
+      callback(event);
+    }
   });
 }
 
